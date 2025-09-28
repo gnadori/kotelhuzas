@@ -87,7 +87,7 @@
                 <input type="text" id="pos-a-input" placeholder="A kutya">
                 <label for="pos-b-input">'B' oldal álláspontja</label>
                 <input type="text" id="pos-b-input" placeholder="A macska">
-                <button id="create-debate-btn">Létrehozás és Indítás 'A' szerepben</button>
+                <button id="create-debate-btn">Létrehozás és Belépés Adminként</button>
                 <button id="back-to-join-btn1" class="secondary">Vissza</button>
             </div>
 
@@ -150,7 +150,7 @@
         
         let currentDebateId=null,currentUserRole=null,dbRef=null,localState={};
         
-        // --- ADMIN RENDSZER: EGYEDI FELHASZNÁLÓI AZONOSÍTÓ ---
+        // EGYEDI FELHASZNÁLÓI AZONOSÍTÓ
         let userUid = sessionStorage.getItem('userUid');
         if (!userUid) {
             userUid = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -179,14 +179,16 @@
             const debateId = generateDebateCode();
             dbRef = db.ref('debates/' + debateId);
             
-            currentUserRole = 'A';
+            // A LÉTREHOZÓ (TANÁR) ADMIN ÉS NÉZŐ LESZ
+            currentUserRole = 'Néző';
             currentDebateId = debateId;
 
             const newDebateState = {
                 topic: topic, positionA: posA, positionB: posB,
-                gameState: 'WAITING_FOR_B', scoreA: 0, scoreB: 0, turn: 'A',
-                participants: { A: true },
-                adminUid: userUid, // Létrehozó beállítása adminként
+                gameState: 'WAITING_FOR_PLAYERS', // Új kezdeti állapot
+                scoreA: 0, scoreB: 0, turn: 'A',
+                participants: {}, // A vitázók még nem csatlakoztak
+                adminUid: userUid,
                 rounds: []
             };
             await dbRef.set(newDebateState);
@@ -224,7 +226,10 @@
         
         async function selectRole(role) {
             currentUserRole = role;
-            await db.ref(`debates/${currentDebateId}/participants/${currentUserRole}`).set(true);
+            // A "Néző" szerepkört nem kell külön elmenteni a participants alá, hogy többen is lehessenek.
+            if (role === 'A' || role === 'B') {
+                await db.ref(`debates/${currentDebateId}/participants/${currentUserRole}`).set(true);
+            }
             sessionStorage.setItem('debateId', currentDebateId);
             sessionStorage.setItem('userRole', currentUserRole);
             joinScreen.classList.add('hidden');
@@ -237,7 +242,7 @@
             dbRef.on('value', (snapshot) => {
                 if (!snapshot.exists()) { alert('A vitát törölték.'); location.reload(); return; }
                 const state = snapshot.val();
-                if (state.gameState === 'WAITING_FOR_B' && state.participants?.A && state.participants?.B) {
+                if (state.gameState === 'WAITING_FOR_PLAYERS' && state.participants?.A && state.participants?.B) {
                     dbRef.update({ gameState: 'A_TURN', turn: 'A' });
                     return;
                 }
@@ -255,7 +260,6 @@
             scoreADisplay.textContent = state.scoreA;
             scoreBDisplay.textContent = state.scoreB;
 
-            // Admin jelvény megjelenítése
             if (userUid === state.adminUid) { adminBadgeDisplay.classList.remove('hidden'); }
 
             const scoreDiff = state.scoreA - state.scoreB;
@@ -275,7 +279,6 @@
                         roundEl.appendChild(votingSection);
                     }
                     
-                    // === JAVÍTÁS: KÖR LEZÁRÁSA GOMB CSAK AZ ADMINNAK ===
                     if (userUid === state.adminUid && state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
                          const endRoundBtn = document.createElement('button'); endRoundBtn.textContent = 'Kör lezárása és eredmény (Admin)'; endRoundBtn.style.marginTop = '15px'; endRoundBtn.onclick = () => endRound(index);
                          roundEl.appendChild(endRoundBtn);
@@ -291,9 +294,9 @@
                 dbRef.off(); return;
             }
 
-            if (state.gameState === 'WAITING_FOR_B') {
-                turnIndicator.textContent = "Várakozás a másik vitázóra...";
-                inputArea.innerHTML = `<div id="status-message">Amint mindkét vitázó csatlakozik, 'A' kezdheti az első kört.</div>`;
+            if (state.gameState === 'WAITING_FOR_PLAYERS') {
+                turnIndicator.textContent = "Várakozás a vitázók csatlakozására...";
+                inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`;
             } else if (state.turn === currentUserRole) {
                 turnIndicator.textContent = 'Te következel!';
                 const placeholder = currentUserRole === 'A' ? 'Írd be az érvedet...' : 'Írd be a válaszod...';
