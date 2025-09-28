@@ -150,7 +150,6 @@
         
         let currentDebateId=null,currentUserRole=null,dbRef=null,localState={};
         
-        // EGYEDI FELHASZNÁLÓI AZONOSÍTÓ
         let userUid = sessionStorage.getItem('userUid');
         if (!userUid) {
             userUid = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -165,7 +164,7 @@
         backBtn2.addEventListener('click', () => { roleSelectionView.classList.add('hidden'); initialView.classList.remove('hidden'); });
 
         function generateDebateCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ012356789'; let code = '';
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let code = '';
             for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
             return code;
         }
@@ -260,10 +259,8 @@
 
             if (userUid === state.adminUid) { adminBadgeDisplay.classList.remove('hidden'); }
 
-            // === JAVÍTOTT JELZŐ MOZGATÁS ===
-            const scoreDiff = state.scoreA - state.scoreB; // Ez -3 és +3 között lesz
-            // A pálya szélességének 1/6-a kb. 16.67%. A teljes pálya 100% (-50-től +50-ig).
-            const movePercentage = scoreDiff * 16.67; 
+            const scoreDiff = state.scoreA - state.scoreB;
+            const movePercentage = scoreDiff * (100 / 6); 
             marker.style.transform = `translate(-50%, -50%) translateX(${movePercentage}%)`;
 
             roundsContainer.innerHTML = '';
@@ -276,14 +273,17 @@
                     if (state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
                         const votingSection = document.createElement('div'); votingSection.className = 'voting-section';
                         
-                        // === JAVÍTOTT SZAVAZATSZÁM KIJELZÉS ===
                         const isAdmin = userUid === state.adminUid;
-                        const votesA_text = isAdmin ? `(${round.votesA || 0})` : '';
-                        const votesB_text = isAdmin ? `(${round.votesB || 0})` : '';
+                        const votesA_text = isAdmin ? `(${(round.votesA || 0)})` : '';
+                        const votesB_text = isAdmin ? `(${(round.votesB || 0)})` : '';
+                        
+                        // JAVÍTÁS: Szavazás letiltásának ellenőrzése
+                        const hasVotedKey = `voted_${currentDebateId}_${index}`;
+                        const hasVoted = sessionStorage.getItem(hasVotedKey);
 
                         votingSection.innerHTML = `<span>Szavazz:</span>
-                            <button class="vote-btn" onclick="castVote(${index}, 'A')">'A' érvére ${votesA_text}</button>
-                            <button class="vote-btn" onclick="castVote(${index}, 'B')">'B' érvére ${votesB_text}</button>`;
+                            <button class="vote-btn" onclick="castVote(${index}, 'A')" ${hasVoted ? 'disabled' : ''}>'A' érvére ${votesA_text}</button>
+                            <button class="vote-btn" onclick="castVote(${index}, 'B')" ${hasVoted ? 'disabled' : ''}>'B' érvére ${votesB_text}</button>`;
                         roundEl.appendChild(votingSection);
                     }
                     
@@ -336,9 +336,16 @@
         }
         
         function castVote(roundIndex, side) {
+            // JAVÍTÁS: Szavazás után mentés a sessionStorage-be
+            const hasVotedKey = `voted_${currentDebateId}_${roundIndex}`;
+            if (sessionStorage.getItem(hasVotedKey)) {
+                alert('Ebben a körben már szavaztál!');
+                return;
+            }
+
             db.ref(`debates/${currentDebateId}/rounds/${roundIndex}/votes${side}`).transaction((currentVotes) => (currentVotes || 0) + 1);
+            sessionStorage.setItem(hasVotedKey, 'true');
             alert('Köszönjük a szavazatod!');
-            document.querySelectorAll('.vote-btn').forEach(b => b.disabled = true);
         }
         
         async function endRound(roundIndex) {
