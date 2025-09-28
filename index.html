@@ -264,17 +264,17 @@
         // =================================================================================
         // FIREBASE KONFIGURÁCIÓ
         // =================================================================================
-        // IDE MÁSOLD A FIREBASE PROJEKTED KONFIGURÁCIÓS OBJEKTUMÁT!
-       const firebaseConfig = {
-  apiKey: "AIzaSyBGmSIw623DYSMyvULld3cg9NznPgdOawU",
-  authDomain: "kotelhuzas-c552c.firebaseapp.com",
-  databaseURL: "https://kotelhuzas-c552c-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "kotelhuzas-c552c",
-  storageBucket: "kotelhuzas-c552c.firebasestorage.app",
-  messagingSenderId: "847078215867",
-  appId: "1:847078215867:web:a0bca5d972d117d000599e",
-  measurementId: "G-F9M0EJZ4GW"
-};
+        // A te Firebase konfigurációd beillesztve:
+        const firebaseConfig = {
+          apiKey: "AIzaSyBGmSIw623DYSMyvULld3cg9NznPgdOawU",
+          authDomain: "kotelhuzas-c552c.firebaseapp.com",
+          databaseURL: "https://kotelhuzas-c552c-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "kotelhuzas-c552c",
+          storageBucket: "kotelhuzas-c552c.appspot.com",
+          messagingSenderId: "847078215867",
+          appId: "1:847078215867:web:a0bca5d972d117d000599e",
+          measurementId: "G-F9M0EJZ4GW"
+        };
         // =================================================================================
 
         // Firebase inicializálása
@@ -301,6 +301,7 @@
         let currentDebateId = null;
         let currentUserRole = null;
         let dbRef = null;
+        let localState = {}; // Helyi másolat az állapotról
 
         // Eseményfigyelő a csatlakozás gombra
         joinBtn.addEventListener('click', joinOrCreateDebate);
@@ -323,11 +324,11 @@
                 currentUserRole = 'A';
                 
                 const newDebateState = {
-                    gameState: 'WAITING_FOR_B', // A_TURN, B_TURN, VOTING, FINISHED
+                    gameState: 'WAITING_FOR_B',
                     scoreA: 0,
                     scoreB: 0,
                     turn: 'A',
-                    participants: { A: true, B: false },
+                    participants: { A: true }, // 'B' még nincs itt
                     rounds: []
                 };
                 
@@ -342,12 +343,25 @@
                     return;
                 }
                 
-                const participants = snapshot.val().participants;
+                const state = snapshot.val();
+                const participants = state.participants || {};
+                
+                // Szerepkör kiosztása
                 if (!participants.A) currentUserRole = 'A';
                 else if (!participants.B) currentUserRole = 'B';
                 else currentUserRole = 'Néző';
 
-                await db.ref(`debates/${debateId}/participants/${currentUserRole}`).set(true);
+                const updates = {};
+                updates[`/participants/${currentUserRole}`] = true;
+                
+                // === EZ A JAVÍTÁS ===
+                // Ha 'B' csatlakozik, és a játék még várakozó állapotban van, indítsuk el!
+                if (currentUserRole === 'B' && state.gameState === 'WAITING_FOR_B') {
+                    updates['/gameState'] = 'A_TURN';
+                }
+                // === JAVÍTÁS VÉGE ===
+
+                await dbRef.update(updates);
             }
             
             currentDebateId = debateId;
@@ -360,11 +374,12 @@
             listenForUpdates();
         }
 
+
         function listenForUpdates() {
             dbRef.on('value', (snapshot) => {
                 if (snapshot.exists()) {
-                    const state = snapshot.val();
-                    updateUI(state);
+                    localState = snapshot.val(); // Állapot mentése helyileg
+                    updateUI(localState);
                 } else {
                     alert('A vitát törölték.');
                     location.reload();
@@ -380,7 +395,7 @@
             scoreBDisplay.textContent = state.scoreB;
             
             // Kötélhúzás jelző mozgatása
-            const scoreDiff = state.scoreA - state.scoreB; // -3 és +3 között
+            const scoreDiff = state.scoreA - state.scoreB;
             const maxMove = 45; // százalék
             marker.style.transform = `translate(-50%, -50%) translateX(${scoreDiff * (maxMove / 3)}%)`;
 
@@ -409,8 +424,7 @@
                             </div>
                         </div>
                     `;
-
-                    // Szavazási szekció
+                    
                     if (state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
                         const votingSection = document.createElement('div');
                         votingSection.className = 'voting-section';
@@ -430,7 +444,7 @@
                          roundEl.appendChild(endRoundBtn);
                     }
                     
-                    roundsContainer.prepend(roundEl); // Új kör kerüljön felülre
+                    roundsContainer.prepend(roundEl);
                 });
             }
 
@@ -440,7 +454,7 @@
                 gameScreen.classList.add('hidden');
                 winnerScreen.classList.remove('hidden');
                 winnerMessage.textContent = `A győztes: ${state.winner} oldal!`;
-                dbRef.off(); // Leállítjuk a figyelést
+                dbRef.off();
                 return;
             }
 
@@ -455,14 +469,12 @@
                     <button id="submit-argument-btn">Érv elküldése</button>
                 `;
                 document.getElementById('submit-argument-btn').onclick = submitArgument;
+            } else if (state.gameState === 'VOTING') {
+                turnIndicator.textContent = "Szavazás!";
+                inputArea.innerHTML = `<div id="status-message">A közönség szavaz! A vitázók a 'Kör lezárása' gombbal léphetnek tovább.</div>`;
             } else {
                 turnIndicator.textContent = `Várakozás '${state.turn}' vitázóra...`;
                 inputArea.innerHTML = `<div id="status-message">Kis türelmet, amíg a másik fél megfogalmazza az érvét.</div>`;
-            }
-             
-            if (state.gameState === 'VOTING') {
-                turnIndicator.textContent = "Szavazás!";
-                inputArea.innerHTML = `<div id="status-message">A közönség szavaz! A vitázók a 'Kör lezárása' gombbal léphetnek tovább.</div>`;
             }
         }
         
@@ -474,14 +486,15 @@
             }
             
             const updates = {};
-            const currentRoundIndex = dbRef.child('rounds').length > 0 ? dbRef.child('rounds').length : 0;
             
             if (currentUserRole === 'A') {
+                const currentRoundIndex = localState.rounds ? localState.rounds.length : 0;
                 const newRound = { argumentA: text, votesA: 0, votesB: 0 };
                 updates[`/rounds/${currentRoundIndex}`] = newRound;
                 updates['/turn'] = 'B';
+                updates['/gameState'] = 'B_TURN';
             } else { // 'B'
-                const lastRoundIndex = state.rounds.length - 1;
+                const lastRoundIndex = localState.rounds.length - 1;
                 updates[`/rounds/${lastRoundIndex}/argumentB`] = text;
                 updates['/gameState'] = 'VOTING';
                 updates['/turn'] = null;
@@ -495,7 +508,6 @@
             voteRef.transaction((currentVotes) => {
                 return (currentVotes || 0) + 1;
             });
-            // Egyszerűsített, nem kezeli a többszöri szavazást
             alert('Köszönjük a szavazatod!');
             document.querySelectorAll('.vote-btn').forEach(b => b.disabled = true);
         }
@@ -504,8 +516,7 @@
             const roundSnapshot = await db.ref(`debates/${currentDebateId}/rounds/${roundIndex}`).once('value');
             const round = roundSnapshot.val();
             
-            const stateSnapshot = await dbRef.once('value');
-            const state = stateSnapshot.val();
+            const state = localState;
 
             let winner = null;
             if ((round.votesA || 0) > (round.votesB || 0)) {
