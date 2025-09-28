@@ -5,230 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vita Kötélhúzás</title>
     <style>
-        /* --- ÁLTALÁNOS STÍLUSOK --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
+        :root { --blue: #007bff; --red: #dc3545; --light-blue: #e6f2ff; --light-red: #ffe6e6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { width: 100%; max-width: 800px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
+        h1, h2, h3 { color: #1c1e21; }
+        button { background-color: var(--blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
+        button:hover { background-color: #0056b3; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        input[type="text"], textarea { width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 5px 0 15px 0; }
+        textarea { min-height: 100px; resize: vertical; }
+        .hidden { display: none !important; }
+        label { display: block; text-align: left; font-weight: bold; margin-bottom: 2px; }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 25px;
-            text-align: center;
-        }
-
-        h1, h2 {
-            color: #1c1e21;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-        
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        input[type="text"], textarea {
-            width: calc(100% - 24px);
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* --- CSATLAKOZÁS KÉPERNYŐ --- */
-        #join-screen {
-            max-width: 400px;
-        }
+        /* --- KEZDŐKÉPERNYŐ --- */
+        #join-screen { max-width: 450px; }
+        #role-selection-view h3 { margin-top: 25px; }
+        #role-buttons button { margin: 5px; width: 120px; }
 
         /* --- JÁTÉK KÉPERNYŐ --- */
-        #game-header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        #debate-info {
-            font-size: 14px;
-            color: #666;
-        }
-        #debate-code-display {
-            font-weight: bold;
-            background: #eee;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
+        #game-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        #debate-info { font-size: 14px; color: #666; }
+        #debate-code-display { font-weight: bold; background: #eee; padding: 2px 6px; border-radius: 4px; }
+        
+        /* --- TÉMA SZEKCIÓ --- */
+        #debate-topic-container { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 25px; text-align: left; border-left: 5px solid var(--blue); }
+        #debate-topic-container h2 { margin: 0 0 15px 0; font-size: 22px; text-align: center; }
+        .positions { display: flex; justify-content: space-between; gap: 20px; }
+        .position-box { flex: 1; }
+        .position-box h4 { margin: 0 0 5px 0; padding-bottom: 5px; border-bottom: 2px solid; }
+        .position-a h4 { color: var(--blue); border-color: var(--blue); }
+        .position-b h4 { color: var(--red); border-color: var(--red); }
 
         /* --- KÖTÉLHÚZÁS VIZUÁLIS --- */
-        .tug-of-war-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 25px 0;
-            padding: 10px;
-            background: linear-gradient(to right, #e6f2ff, #ffe6e6);
-            border-radius: 8px;
-        }
-
-        .debater-name {
-            font-weight: bold;
-            font-size: 20px;
-        }
-        .name-a { color: #0056b3; }
-        .name-b { color: #b30000; }
-
-        .rope-track {
-            flex-grow: 1;
-            height: 8px;
-            background-color: #ddd;
-            margin: 0 20px;
-            position: relative;
-            border-radius: 4px;
-        }
-
-        #marker {
-            width: 16px;
-            height: 24px;
-            background-color: #333;
-            border-radius: 4px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.5s ease-in-out;
-            border: 2px solid white;
+        .tug-of-war-container { display: flex; align-items: center; justify-content: space-between; margin: 25px 0; padding: 10px; background: linear-gradient(to right, var(--light-blue), var(--light-red)); border-radius: 8px; }
+        .debater-name { font-weight: bold; font-size: 20px; }
+        .name-a { color: var(--blue); }
+        .name-b { color: var(--red); }
+        .rope-track { flex-grow: 1; height: 8px; background-color: #ddd; margin: 0 20px; position: relative; border-radius: 4px; }
+        #marker { width: 16px; height: 24px; background-color: #333; border-radius: 4px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid white; 
+            /* === LÁTVÁNYOSABB ANIMÁCIÓ === */
+            transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
         
         /* --- KÖRÖK ÉS ÉRVEK --- */
-        #rounds-container {
-            margin-top: 20px;
-            text-align: left;
-        }
-
-        .round {
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .round-header {
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 18px;
-            color: #555;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .arguments {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .argument-box {
-            padding: 15px;
-            border-radius: 8px;
-            min-height: 80px;
-        }
-        
-        .argument-a {
-            background-color: #e6f2ff;
-            border-left: 4px solid #007bff;
-        }
-        
-        .argument-b {
-            background-color: #ffe6e6;
-            border-left: 4px solid #dc3545;
-        }
-        
-        .argument-box h4 {
-            margin-top: 0;
-        }
-
-        /* --- SZAVAZÁS ÉS BEVITEL --- */
-        .voting-section {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        
-        .vote-btn {
-            width: 45%;
-        }
-
-        #input-area {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        #status-message {
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            font-style: italic;
-            color: #555;
-        }
-
-        /* --- GYŐZTES KÉPERNYŐ --- */
-        #winner-screen {
-            padding: 40px;
-        }
-        #winner-screen h1 {
-            font-size: 36px;
-            color: #28a745;
-        }
+        #rounds-container { margin-top: 20px; text-align: left; }
+        .round { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .round-header { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #555; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .arguments { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .argument-box { padding: 15px; border-radius: 8px; min-height: 80px; }
+        .argument-a { background-color: var(--light-blue); border-left: 4px solid var(--blue); }
+        .argument-b { background-color: var(--light-red); border-left: 4px solid var(--red); }
+        .argument-box h4 { margin-top: 0; }
+        .voting-section { margin-top: 15px; display: flex; justify-content: space-around; align-items: center; }
+        .vote-btn { width: 45%; }
+        #input-area { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        #status-message { padding: 15px; background-color: #f8f9fa; border-radius: 8px; font-style: italic; color: #555; }
+        #winner-screen { padding: 40px; }
+        #winner-screen h1 { font-size: 36px; color: #28a745; }
     </style>
 </head>
 <body>
 
     <div class="container" id="main-container">
         <div id="join-screen">
-            <h1>Vita Kötélhúzás</h1>
-            <p>Hozd létre a saját vitádat, vagy csatlakozz egy meglévőhöz a kapott kóddal.</p>
-            <input type="text" id="debate-code-input" placeholder="Vita kódja (hagyd üresen újhoz)">
-            <button id="join-btn">Létrehozás / Csatlakozás</button>
+            <div id="initial-view">
+                <h1>Vita Kötélhúzás</h1>
+                <p>Csatlakozz egy vitához a kapott kóddal, vagy hozz létre egy újat.</p>
+                <label for="debate-code-input">Vita Kódja</label>
+                <input type="text" id="debate-code-input" placeholder="Pl. AB12CD">
+                <button id="check-code-btn">Ellenőrzés és Csatlakozás</button>
+                <p>- vagy -</p>
+                <button id="show-create-btn">Új Vita Létrehozása</button>
+            </div>
+
+            <div id="create-view" class="hidden">
+                <h2>Új Vita Létrehozása</h2>
+                <label for="topic-input">Vita Témája / Kérdés</label>
+                <input type="text" id="topic-input" placeholder="Pl. Melyik a jobb háziállat?">
+                <label for="pos-a-input">'A' oldal álláspontja</label>
+                <input type="text" id="pos-a-input" placeholder="A kutya">
+                <label for="pos-b-input">'B' oldal álláspontja</label>
+                <input type="text" id="pos-b-input" placeholder="A macska">
+                <button id="create-debate-btn">Létrehozás</button>
+                <button id="back-to-join-btn1" class="secondary">Vissza</button>
+            </div>
+
+            <div id="role-selection-view" class="hidden">
+                <h3>Válassz Szerepkört!</h3>
+                <div id="role-buttons"></div>
+                <button id="back-to-join-btn2" class="secondary" style="margin-top:20px;">Vissza</button>
+            </div>
         </div>
 
         <div id="game-screen" class="hidden">
+            <div id="debate-topic-container">
+                <h2 id="topic-display"></h2>
+                <div class="positions">
+                    <div class="position-box position-a">
+                        <h4>'A' álláspont</h4>
+                        <p id="pos-a-display"></p>
+                    </div>
+                    <div class="position-box position-b">
+                        <h4>'B' álláspont</h4>
+                        <p id="pos-b-display"></p>
+                    </div>
+                </div>
+            </div>
+
             <div id="game-header">
-                <h2 id="turn-indicator">A játék betöltése...</h2>
+                <h2 id="turn-indicator"></h2>
                 <div id="debate-info">
-                    Vita kódja:
+                    Vita kódja: <span id="debate-code-display"></span> | Szereped: <span id="user-role-display"></span>
+                </div>
+            </div>
+
+            <div class="tug-of-war-container">
+                <span class="debater-name name-a">A oldal (<span id="score-a">0</span>)</span>
+                <div class="rope-track"><div id="marker"></div></div>
+                <span class="debater-name name-b">(<span id="score-b">0</span>) B oldal</span>
+            </div>
+            <div id="rounds-container"></div>
+            <div id="input-area"></div>
+        </div>
+
+        <div id="winner-screen" class="hidden">
