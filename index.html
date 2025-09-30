@@ -12,7 +12,8 @@
         button { background-color: var(--blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
         button:hover { background-color: #0056b3; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        input[type="text"] { width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 5px 0 15px 0; }
+        input[type="text"], textarea { width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 5px 0 15px 0; }
+        textarea { min-height: 150px; resize: vertical; } /* NAGYOBB MEZŐ */
         .hidden { display: none !important; }
         label { display: block; text-align: left; font-weight: bold; margin-bottom: 2px; }
         #join-screen { max-width: 450px; }
@@ -105,7 +106,8 @@
             const participants = debateSnapshot.val().participants || {};
             if ((role === 'A' || role === 'B') && participants[role]) { alert(`Ez a szerepkör ('${role}') már foglalt!`); return; }
             currentUserRole = role; currentDebateId = debateId; dbRef = debateRef;
-            sessionStorage.setItem('debateId', currentDebateId); sessionStorage.setItem('userRole', currentUserRole);
+            sessionStorage.setItem('debateId', currentDebateId);
+            sessionStorage.setItem('userRole', currentUserRole);
             if (role === 'A' || role === 'B') { await db.ref(`debates/${currentDebateId}/participants/${role}`).set(true); }
             joinScreen.classList.add('hidden'); gameScreen.classList.remove('hidden');
             listenForUpdates();
@@ -129,8 +131,11 @@
             }
             topicDisplay.textContent = state.topic; posADisplay.textContent = state.positionA; posBDisplay.textContent = state.positionB; debateCodeDisplay.textContent = currentDebateId; userRoleDisplay.textContent = currentUserRole; scoreADisplay.textContent = state.scoreA; scoreBDisplay.textContent = state.scoreB;
             if (userUid === state.adminUid) adminBadgeDisplay.classList.remove('hidden');
-            const rotation = state.points * 45;
+            
+            const scoreDifference = state.scoreA - state.scoreB;
+            const rotation = scoreDifference * -30;
             gaugeNeedle.style.transform = `rotate(${rotation}deg)`;
+
             roundsContainer.innerHTML = "";
             if (state.rounds) {
                 state.rounds.forEach((round, index) => {
@@ -147,14 +152,14 @@
                         roundEl.appendChild(votingSection);
                     }
                     if (userUid === state.adminUid && state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
-                         const endRoundBtn = document.createElement('button'); endRoundBtn.textContent = 'Kör lezárása és eredmény (Admin)'; endRoundBtn.style.marginTop = '15px'; endRoundBtn.onclick = () => endRound(index);
-                         roundEl.appendChild(endRoundBtn);
+                        const endRoundBtn = document.createElement('button'); endRoundBtn.textContent = 'Kör lezárása és eredmény (Admin)'; endRoundBtn.style.marginTop = '15px'; endRoundBtn.onclick = () => endRound(index);
+                        roundEl.appendChild(endRoundBtn);
                     }
                     roundsContainer.prepend(roundEl);
                 });
             }
             inputArea.innerHTML = "";
-            if (state.gameState === 'WAITING_FOR_PLAYERS') { turnIndicator.textContent = "Várakozás a vitázók csatlakozására..."; inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`; } 
+            if (state.gameState === 'WAITING_FOR_PLAYERS') { turnIndicator.textContent = "Várakozás a vitázók csatlakozására..."; inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`; }
             else if (state.turn === currentUserRole) {
                 const lastRound = state.rounds ? state.rounds[state.rounds.length - 1] : null; const isResponding = lastRound && lastRound.startingArgument && !lastRound.respondingArgument;
                 const actionText = isResponding ? 'Írd be a válaszod...' : 'Írd be az érvedet...'; turnIndicator.textContent = 'Te következel!';
@@ -170,13 +175,21 @@
             const state = localState; let winner = 'Döntetlen';
             if ((round.votesA || 0) > (round.votesB || 0)) winner = 'A'; if ((round.votesB || 0) > (round.votesA || 0)) winner = 'B';
             const updates = {}; updates[`/rounds/${roundIndex}/winner`] = winner;
-            let newPoints = state.points;
-            if (winner === 'A') { newPoints--; updates['/scoreA'] = state.scoreA + 1; } 
-            else if (winner === 'B') { newPoints++; updates['/scoreB'] = state.scoreB + 1; }
-            updates['/points'] = newPoints;
-            if (newPoints <= -2) { updates.gameState = 'FINISHED'; updates.winner = 'A'; } 
-            else if (newPoints >= 2) { updates.gameState = 'FINISHED'; updates.winner = 'B'; } 
-            else { const nextTurn = state.nextStartingPlayer; updates.gameState = nextTurn + '_TURN'; updates.turn = nextTurn; updates.nextStartingPlayer = (nextTurn === 'A' ? 'B' : 'A'); }
+            let newScoreA = state.scoreA; let newScoreB = state.scoreB;
+            if (winner === 'A') { newScoreA++; } else if (winner === 'B') { newScoreB++; }
+            updates['/scoreA'] = newScoreA; updates['/scoreB'] = newScoreB;
+            if (newScoreA - newScoreB >= 3) {
+                updates['/gameState'] = 'FINISHED';
+                updates['/winner'] = 'A';
+            } else if (newScoreB - newScoreA >= 3) {
+                updates['/gameState'] = 'FINISHED';
+                updates['/winner'] = 'B';
+            } else {
+                const nextTurn = state.nextStartingPlayer;
+                updates['/gameState'] = nextTurn + '_TURN';
+                updates['/turn'] = nextTurn;
+                updates['/nextStartingPlayer'] = (nextTurn === 'A' ? 'B' : 'A');
+            }
             dbRef.update(updates);
         }
     </script>
