@@ -17,15 +17,18 @@
         textarea { min-height: 100px; resize: vertical; }
         .hidden { display: none !important; }
         label { display: block; text-align: left; font-weight: bold; margin-bottom: 2px; }
+
         #join-screen { max-width: 450px; }
         .code-display-area { margin-top: 20px; text-align: left; }
         .code-box { background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .code-box span { font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: bold; }
         .code-box button { font-size: 12px; padding: 6px 10px; }
+        
         #game-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
         #debate-info { font-size: 14px; color: #666; }
         #debate-code-display { font-weight: bold; background: #eee; padding: 2px 6px; border-radius: 4px; }
         .admin-badge { background-color: #ffc107; color: #333; font-size: 12px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        
         #debate-topic-container { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 25px; text-align: left; border-left: 5px solid var(--blue); }
         #debate-topic-container h2 { margin: 0 0 15px 0; font-size: 22px; text-align: center; }
         .positions { display: flex; justify-content: space-between; gap: 20px; }
@@ -41,6 +44,7 @@
         #marker { width: 16px; height: 24px; background-color: #333; border-radius: 4px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid white; 
             transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
+        
         #rounds-container { margin-top: 20px; text-align: left; }
         .round { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
         .round-header { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #555; padding-bottom: 10px; border-bottom: 1px solid #eee; }
@@ -58,6 +62,7 @@
     </style>
 </head>
 <body>
+
     <div class="container" id="main-container">
         <div id="join-screen">
             <div id="initial-view">
@@ -69,6 +74,7 @@
                 <p>- vagy -</p>
                 <button id="show-create-btn">Új Vita Létrehozása (Adminként)</button>
             </div>
+
             <div id="create-view" class="hidden">
                 <h2>Új Vita Létrehozása</h2>
                 <label for="topic-input">Vita Témája / Kérdés</label> <input type="text" id="topic-input">
@@ -77,6 +83,7 @@
                 <button id="create-debate-btn">Létrehozás</button>
                 <button id="back-to-join-btn1" class="secondary">Vissza</button>
             </div>
+
             <div id="creation-success-view" class="hidden">
                 <h3>Vita Sikeresen Létrehozva!</h3>
                 <p>Oszd meg a megfelelő kódokat a résztvevőkkel:</p>
@@ -88,6 +95,7 @@
                 <button id="enter-admin-btn" style="margin-top: 20px;">Belépés a Vitába Adminként</button>
             </div>
         </div>
+        
         <div id="game-screen" class="hidden">
             <div id="debate-topic-container">
                 <h2 id="topic-display"></h2>
@@ -139,9 +147,16 @@
         createDebateBtn.addEventListener('click', createDebate);
         backBtn1.addEventListener('click', () => { createView.classList.add('hidden'); initialView.classList.remove('hidden'); });
         joinBtn.addEventListener('click', joinDebate);
+        
         enterAdminBtn.addEventListener('click', () => {
-            sessionStorage.setItem('debateId', currentDebateId); sessionStorage.setItem('userRole', currentUserRole);
-            joinScreen.classList.add('hidden'); gameScreen.classList.remove('hidden');
+            sessionStorage.setItem('debateId', currentDebateId);
+            sessionStorage.setItem('userRole', currentUserRole);
+            
+            // === EZ VOLT A HIBA, ITT HIÁNYZOTT A dbRef BEÁLLÍTÁSA ===
+            dbRef = db.ref('debates/' + currentDebateId);
+
+            joinScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
             listenForUpdates();
         });
         
@@ -198,12 +213,10 @@
                 state.rounds.forEach((round, index) => {
                     const roundEl = document.createElement('div'); roundEl.className = 'round';
                     let roundWinnerInfo = round.winner ? ` - A kört nyerte: ${round.winner}` : '';
-                    // JAVÍTÁS: A boxok felcserélése a kezdőjátékos alapján
                     const starterBox = `<div class="argument-box argument-${round.startingPlayer.toLowerCase()}"><h4>'${round.startingPlayer}' érve:</h4><p>${round.startingArgument || '<i>Várakozás...</i>'}</p></div>`;
                     const responder = round.startingPlayer === 'A' ? 'B' : 'A';
                     const responderBox = `<div class="argument-box argument-${responder.toLowerCase()}"><h4>'${responder}' válasza:</h4><p>${round.respondingArgument || '<i>Várakozás...</i>'}</p></div>`;
                     roundEl.innerHTML = `<div class="round-header">${index + 1}. Kör (Kezdő: ${round.startingPlayer})${roundWinnerInfo}</div><div class="arguments">${round.startingPlayer === 'A' ? starterBox + responderBox : responderBox + starterBox}</div>`;
-                    
                     if (state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
                         const votingSection = document.createElement('div'); votingSection.className = 'voting-section';
                         const isAdmin = userUid === state.adminUid;
@@ -219,7 +232,6 @@
                     roundsContainer.prepend(roundEl);
                 });
             }
-
             inputArea.innerHTML = '';
             if (state.gameState === 'FINISHED') { gameScreen.classList.add('hidden'); winnerScreen.classList.remove('hidden'); winnerScreen.innerHTML = `<h1>A játék véget ért!</h1><h2>A győztes: ${state.winner} oldal!</h2><button onclick="location.reload()">Új játék</button>`; dbRef.off(); return; }
             if (state.gameState === 'WAITING_FOR_PLAYERS') { turnIndicator.textContent = "Várakozás a vitázók csatlakozására..."; inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`; } 
@@ -236,23 +248,18 @@
         
         function submitArgument() {
             const text = document.getElementById('argument-input').value.trim(); if (!text) { alert('Az érv nem lehet üres!'); return; }
-            const updates = {};
-            const rounds = localState.rounds ? [...localState.rounds] : [];
-            const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
+            const updates = {}; const rounds = localState.rounds ? [...localState.rounds] : []; const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
             const isResponding = lastRound && lastRound.startingArgument && !lastRound.respondingArgument;
-
             if (isResponding) {
                 const lastRoundIndex = rounds.length - 1;
                 updates[`/rounds/${lastRoundIndex}/respondingArgument`] = text;
-                updates['/gameState'] = 'VOTING';
-                updates['/turn'] = null;
+                updates['/gameState'] = 'VOTING'; updates['/turn'] = null;
             } else {
                 const currentRoundIndex = rounds.length;
                 const newRound = { startingPlayer: localState.turn, startingArgument: text, votesA: 0, votesB: 0 };
                 updates[`/rounds/${currentRoundIndex}`] = newRound;
                 const responder = localState.turn === 'A' ? 'B' : 'A';
-                updates['/turn'] = responder;
-                updates['/gameState'] = responder + '_TURN';
+                updates['/turn'] = responder; updates['/gameState'] = responder + '_TURN';
             }
             dbRef.update(updates);
         }
@@ -271,12 +278,10 @@
             if ((round.votesA || 0) > (round.votesB || 0)) winner = 'A';
             if ((round.votesB || 0) > (round.votesA || 0)) winner = 'B';
             const updates = {}; updates[`/rounds/${roundIndex}/winner`] = winner;
-            
             let newMarkerPosition = state.markerPosition;
             if (winner === 'A') { newMarkerPosition -= 20; updates['/scoreA'] = state.scoreA + 1; } 
             else if (winner === 'B') { newMarkerPosition += 20; updates['/scoreB'] = state.scoreB + 1; }
             updates['/markerPosition'] = newMarkerPosition;
-
             if (newMarkerPosition <= 0) { updates['/gameState'] = 'FINISHED'; updates['/winner'] = 'A'; } 
             else if (newMarkerPosition >= 120) { updates['/gameState'] = 'FINISHED'; updates['/winner'] = 'B'; } 
             else {
