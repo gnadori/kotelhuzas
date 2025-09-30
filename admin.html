@@ -11,31 +11,34 @@
         h1, h2, h3 { color: #1c1e21; }
         button { background-color: var(--blue); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
         button:hover { background-color: #0056b3; }
-        button:active { transform: scale(0.98); }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        input[type="text"], textarea { width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 5px 0 15px 0; }
+        input[type="text"] { width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 5px 0 15px 0; }
+        .hidden { display: none !important; }
+        label { display: block; text-align: left; font-weight: bold; margin-bottom: 2px; }
+        
+        /* GAUGE KIJELZŐ STÍLUSOK */
+        .gauge-container { position: relative; width: 300px; height: 150px; overflow: hidden; margin: 25px auto; display: flex; justify-content: center; align-items: flex-end; }
+        .gauge-background { width: 300px; height: 300px; border: 40px solid #eee; border-color: var(--light-blue) var(--light-red) #eee #eee; border-radius: 50%; position: absolute; top: 0; box-sizing: border-box; transform: rotate(45deg); }
+        .gauge-needle { width: 4px; height: 140px; background-color: #333; position: absolute; bottom: 0; transform-origin: bottom center; transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .gauge-center-dot { width: 20px; height: 20px; background-color: #333; border-radius: 50%; position: absolute; bottom: -10px; z-index: 1; }
+        .gauge-labels { width: 340px; margin: -20px auto 25px auto; display: flex; justify-content: space-between; font-weight: bold; }
+        .gauge-labels .name-a { color: var(--blue); }
+        .gauge-labels .name-b { color: var(--red); }
+        
+        /* A többi stílus... */
         .code-display-area { margin-top: 20px; border: 2px dashed #ccc; padding: 15px; border-radius: 8px; text-align: left; }
         .code-box { background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .code-box span { font-family: 'Courier New', Courier, monospace; font-size: 18px; font-weight: bold; }
         .code-box button { font-size: 12px; padding: 6px 10px; }
-        .hidden { display: none !important; }
-        #marker { width: 40px; height: 30px; background-color: #333; border-radius: 4px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid white; transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; justify-content: center; align-items: center; }
-        #marker-value { color: white; font-size: 12px; font-weight: bold; }
-        label { display: block; text-align: left; font-weight: bold; margin-bottom: 2px; }
-        textarea { min-height: 100px; resize: vertical; }
-        #game-header, #debate-topic-container, .tug-of-war-container, #rounds-container, #input-area { text-align: center; }
+        #game-header, #debate-topic-container, #rounds-container, #input-area { text-align: center; }
         #debate-info { font-size: 14px; color: #666; }
         .admin-badge { background-color: #ffc107; color: #333; font-size: 12px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
-        #debate-topic-container { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 25px; text-align: left; border-left: 5px solid var(--blue); }
+        #debate-topic-container { background: #f8f9fa; border-radius: 8px; padding: 15px; text-align: left; border-left: 5px solid var(--blue); }
         .positions { display: flex; justify-content: space-between; gap: 20px; }
         .position-box { flex: 1; }
         .position-box h4 { margin: 0 0 5px 0; padding-bottom: 5px; border-bottom: 2px solid; }
         .position-a h4 { color: var(--blue); border-color: var(--blue); }
         .position-b h4 { color: var(--red); border-color: var(--red); }
-        .tug-of-war-container { display: flex; align-items: center; justify-content: space-between; margin: 25px 0; padding: 10px; background: linear-gradient(to right, var(--light-blue), var(--light-red)); border-radius: 8px; }
-        .debater-name { font-weight: bold; font-size: 20px; }
-        .name-a { color: var(--blue); } .name-b { color: var(--red); }
-        .rope-track { flex-grow: 1; height: 8px; background-color: #ddd; margin: 0 20px; position: relative; border-radius: 4px; }
         .round { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
         .round-header { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #555; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         .arguments { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -76,11 +79,17 @@
                     <h2 id="turn-indicator"></h2>
                     <div id="debate-info">Belső azonosító: <span id="debate-code-display"></span> | Szereped: <span id="user-role-display"></span><span id="admin-badge-display" class="hidden"><span class="admin-badge">ADMIN</span></span></div>
                 </div>
-                <div class="tug-of-war-container">
-                    <span class="debater-name name-a">A oldal (<span id="score-a">0</span>)</span>
-                    <div class="rope-track"><div id="marker"><span id="marker-value">0</span></div></div>
-                    <span class="debater-name name-b">(<span id="score-b">0</span>) B oldal</span>
+
+                <div class="gauge-container">
+                    <div class="gauge-background"></div>
+                    <div id="gauge-needle" class="gauge-needle"></div>
+                    <div class="gauge-center-dot"></div>
                 </div>
+                <div class="gauge-labels">
+                    <span class="name-a">A oldal (<span id="score-a">0</span>)</span>
+                    <span class="name-b">(<span id="score-b">0</span>) B oldal</span>
+                </div>
+
                 <div id="rounds-container"></div>
                 <div id="input-area"></div>
             </div>
@@ -93,7 +102,8 @@
         const firebaseConfig = { apiKey: "AIzaSyBGmSIw623DYSMyvULld3cg9NznPgdOawU", authDomain: "kotelhuzas-c552c.firebaseapp.com", databaseURL: "https://kotelhuzas-c552c-default-rtdb.europe-west1.firebasedatabase.app", projectId: "kotelhuzas-c552c", storageBucket: "kotelhuzas-c552c.appspot.com", messagingSenderId: "847078215867", appId: "1:847078215867:web:a0bca5d972d117d000599e", measurementId: "G-F9M0EJZ4GW" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const createView=document.getElementById("create-view"),gameScreen=document.getElementById("game-screen"),createDebateBtn=document.getElementById("create-debate-btn"),topicDisplay=document.getElementById("topic-display"),posADisplay=document.getElementById("pos-a-display"),posBDisplay=document.getElementById("pos-b-display"),debateCodeDisplay=document.getElementById("debate-code-display"),userRoleDisplay=document.getElementById("user-role-display"),scoreADisplay=document.getElementById("score-a"),scoreBDisplay=document.getElementById("score-b"),marker=document.getElementById("marker"),markerValue=document.getElementById("marker-value"),turnIndicator=document.getElementById("turn-indicator"),roundsContainer=document.getElementById("rounds-container"),inputArea=document.getElementById("input-area"),winnerScreen=document.getElementById("winner-screen"),adminBadgeDisplay=document.getElementById("admin-badge-display");
+
+        const createView=document.getElementById("create-view"),gameScreen=document.getElementById("game-screen"),createDebateBtn=document.getElementById("create-debate-btn"),topicDisplay=document.getElementById("topic-display"),posADisplay=document.getElementById("pos-a-display"),posBDisplay=document.getElementById("pos-b-display"),debateCodeDisplay=document.getElementById("debate-code-display"),userRoleDisplay=document.getElementById("user-role-display"),scoreADisplay=document.getElementById("score-a"),scoreBDisplay=document.getElementById("score-b"),gaugeNeedle=document.getElementById("gauge-needle"),turnIndicator=document.getElementById("turn-indicator"),roundsContainer=document.getElementById("rounds-container"),inputArea=document.getElementById("input-area"),winnerScreen=document.getElementById("winner-screen"),adminBadgeDisplay=document.getElementById("admin-badge-display");
         let currentDebateId=null,currentUserRole=null,dbRef=null,localState={};
         let userUid = sessionStorage.getItem('userUid');
         if (!userUid) { userUid = 'user_' + Math.random().toString(36).substr(2, 9); sessionStorage.setItem('userUid', userUid); }
@@ -107,7 +117,7 @@
             if (!topic || !posA || !posB) { alert('Minden mezőt ki kell tölteni!'); return; }
             const debateId = "D" + generateCode(), codeA = "A" + generateCode(), codeB = "B" + generateCode(), codeSpec = "S" + generateCode();
             currentUserRole = 'Néző'; currentDebateId = debateId; dbRef = db.ref('debates/' + debateId);
-            const newDebateState = { topic, positionA: posA, positionB: posB, gameState: 'WAITING_FOR_PLAYERS', scoreA: 0, scoreB: 0, markerPosition: 0, turn: 'A', nextStartingPlayer: 'B', participants: {}, adminUid: userUid, rounds: [] };
+            const newDebateState = { topic, positionA: posA, positionB: posB, gameState: 'WAITING_FOR_PLAYERS', scoreA: 0, scoreB: 0, points: 0, turn: 'A', nextStartingPlayer: 'B', participants: {}, adminUid: userUid, rounds: [] };
             const updates = {};
             updates[`/debates/${debateId}`] = newDebateState;
             updates[`/codeMappings/${codeA}`] = { debateId, role: 'A' };
@@ -126,10 +136,7 @@
             dbRef.on('value', (snapshot) => {
                 if (!snapshot.exists()) { alert('A vitát törölték.'); location.reload(); return; }
                 const state = snapshot.val();
-                if (state.gameState === 'WAITING_FOR_PLAYERS' && state.participants?.A && state.participants?.B) {
-                    dbRef.update({ gameState: 'A_TURN', turn: 'A' });
-                    return;
-                }
+                if (state.gameState === 'WAITING_FOR_PLAYERS' && state.participants?.A && state.participants?.B) { dbRef.update({ gameState: 'A_TURN', turn: 'A' }); return; }
                 localState = state;
                 updateUI(state);
             });
@@ -137,26 +144,16 @@
         
         function updateUI(state) {
             if (state.gameState === 'FINISHED') {
-                gameScreen.classList.add('hidden');
-                winnerScreen.classList.remove('hidden');
+                gameScreen.classList.add('hidden'); winnerScreen.classList.remove('hidden');
                 winnerScreen.innerHTML = `<h1>A játék véget ért!</h1><h2>A győztes: ${state.winner} oldal!</h2><button onclick="location.reload()">Új játék</button>`;
-                dbRef.off();
-                return;
+                dbRef.off(); return;
             }
-
-            topicDisplay.textContent = state.topic;
-            posADisplay.textContent = state.positionA;
-            posBDisplay.textContent = state.positionB;
-            debateCodeDisplay.textContent = currentDebateId;
-            userRoleDisplay.textContent = currentUserRole;
-            scoreADisplay.textContent = state.scoreA;
-            scoreBDisplay.textContent = state.scoreB;
+            topicDisplay.textContent = state.topic; posADisplay.textContent = state.positionA; posBDisplay.textContent = state.positionB; debateCodeDisplay.textContent = currentDebateId; userRoleDisplay.textContent = currentUserRole; scoreADisplay.textContent = state.scoreA; scoreBDisplay.textContent = state.scoreB;
             if (userUid === state.adminUid) adminBadgeDisplay.classList.remove('hidden');
             
-            markerValue.textContent = state.markerPosition;
-            const movePercentage = state.markerPosition * (50 / 60);
-            marker.style.transform = `translate(-50%, -50%) translateX(${movePercentage}%)`;
-
+            const rotation = state.points * 45;
+            gaugeNeedle.style.transform = `rotate(${rotation}deg)`;
+            
             roundsContainer.innerHTML = "";
             if (state.rounds) {
                 state.rounds.forEach((round, index) => {
@@ -168,12 +165,8 @@
                     roundEl.innerHTML = `<div class="round-header">${index + 1}. Kör (Kezdő: ${round.startingPlayer})${roundWinnerInfo}</div><div class="arguments">${round.startingPlayer === 'A' ? starterBox + responderBox : responderBox + starterBox}</div>`;
                     if (state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
                         const votingSection = document.createElement('div'); votingSection.className = 'voting-section';
-                        const isAdmin = userUid === state.adminUid;
-                        const votesA_text = isAdmin ? `(${(round.votesA || 0)})` : '';
-                        const votesB_text = isAdmin ? `(${(round.votesB || 0)})` : '';
-                        const hasVotedKey = `voted_${currentDebateId}_${index}`;
-                        const hasVoted = sessionStorage.getItem(hasVotedKey);
-                        votingSection.innerHTML = `<span>Szavazz:</span><button class="vote-btn" onclick="castVote(${index}, 'A')" ${hasVoted ? 'disabled' : ''}>'A' érvére ${votesA_text}</button><button class="vote-btn" onclick="castVote(${index}, 'B')" ${hasVoted ? 'disabled' : ''}>'B' érvére ${votesB_text}</button>`;
+                        const isAdmin = userUid === state.adminUid, votesA_text = isAdmin ? `(${(round.votesA || 0)})` : '', votesB_text = isAdmin ? `(${(round.votesB || 0)})` : '', hasVotedKey = `voted_${currentDebateId}_${index}`, hasVoted = sessionStorage.getItem(hasVotedKey);
+                        votingSection.innerHTML = `<span>Szavazz:</span><button onclick="castVote(${index}, 'A')" ${hasVoted ? 'disabled' : ''}>'A' érvére ${votesA_text}</button><button onclick="castVote(${index}, 'B')" ${hasVoted ? 'disabled' : ''}>'B' érvére ${votesB_text}</button>`;
                         roundEl.appendChild(votingSection);
                     }
                     if (userUid === state.adminUid && state.gameState === 'VOTING' && state.rounds.length - 1 === index) {
@@ -183,85 +176,30 @@
                     roundsContainer.prepend(roundEl);
                 });
             }
-
             inputArea.innerHTML = "";
-            if (state.gameState === 'WAITING_FOR_PLAYERS') {
-                turnIndicator.textContent = "Várakozás a vitázók csatlakozására...";
-                inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`;
-            } else if (state.turn === currentUserRole) {
+            if (state.gameState === 'WAITING_FOR_PLAYERS') { turnIndicator.textContent = "Várakozás a vitázók csatlakozására..."; inputArea.innerHTML = `<div id="status-message">A vita elindul, amint 'A' és 'B' is csatlakozott.</div>`; } 
+            else if (state.turn === currentUserRole) {
                 const lastRound = state.rounds ? state.rounds[state.rounds.length - 1] : null; const isResponding = lastRound && lastRound.startingArgument && !lastRound.respondingArgument;
                 const actionText = isResponding ? 'Írd be a válaszod...' : 'Írd be az érvedet...'; turnIndicator.textContent = 'Te következel!';
                 inputArea.innerHTML = `<textarea id="argument-input" placeholder="${actionText}"></textarea><button id="submit-argument-btn">Elküldés</button>`;
                 document.getElementById('submit-argument-btn').onclick = submitArgument;
-            } else if (state.gameState === 'VOTING') {
-                turnIndicator.textContent = "Szavazás!";
-                inputArea.innerHTML = `<div id="status-message">A közönség szavaz! Az admin lezárhatja a kört.</div>`;
-            } else {
-                turnIndicator.textContent = `Várakozás '${state.turn}' vitázóra...`;
-                inputArea.innerHTML = `<div id="status-message">Kis türelmet, amíg a másik fél megfogalmazza az érvét.</div>`;
-            }
+            } else if (state.gameState === 'VOTING') { turnIndicator.textContent = "Szavazás!"; inputArea.innerHTML = `<div id="status-message">A közönség szavaz! Az admin lezárhatja a kört.</div>`; } 
+            else { turnIndicator.textContent = `Várakozás '${state.turn}' vitázóra...`; inputArea.innerHTML = `<div id="status-message">Kis türelmet, amíg a másik fél megfogalmazza az érvét.</div>`; }
         }
-        
-        function submitArgument() {
-            const text = document.getElementById('argument-input').value.trim();
-            if (!text) { alert('Az érv nem lehet üres!'); return; }
-            const updates = {};
-            const rounds = localState.rounds ? [...localState.rounds] : [];
-            const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
-            const isResponding = lastRound && lastRound.startingArgument && !lastRound.respondingArgument;
-            if (isResponding) {
-                updates[`/rounds/${rounds.length - 1}/respondingArgument`] = text;
-                updates['/gameState'] = 'VOTING';
-                updates['/turn'] = null;
-            } else {
-                updates[`/rounds/${rounds.length}`] = { startingPlayer: localState.turn, startingArgument: text, votesA: 0, votesB: 0 };
-                const responder = localState.turn === 'A' ? 'B' : 'A';
-                updates['/turn'] = responder;
-                updates['/gameState'] = responder + '_TURN';
-            }
-            dbRef.update(updates);
-        }
-
-        function castVote(roundIndex, side) {
-            const hasVotedKey = `voted_${currentDebateId}_${roundIndex}`;
-            if (sessionStorage.getItem(hasVotedKey)) { alert('Ebben a körben már szavaztál!'); return; }
-            db.ref(`debates/${currentDebateId}/rounds/${roundIndex}/votes${side}`).transaction((currentVotes) => (currentVotes || 0) + 1);
-            sessionStorage.setItem(hasVotedKey, 'true');
-            alert('Köszönjük a szavazatod!');
-        }
-
+        function submitArgument(){const t=document.getElementById("argument-input").value.trim();if(!t)return void alert("Az érv nem lehet üres!");const e={},a=localState.rounds?[...localState.rounds]:[],n=a.length>0?a[a.length-1]:null;n&&n.startingArgument&&!n.respondingArgument?(e[`/rounds/${a.length-1}/respondingArgument`]=t,e.gameState="VOTING",e.turn=null):(e[`/rounds/${a.length}`]={startingPlayer:localState.turn,startingArgument:t,votesA:0,votesB:0},e.turn="A"===localState.turn?"B":"A",e.gameState="A"===localState.turn?"B_TURN":"A_TURN"),dbRef.update(e)}
+        function castVote(t,e){const a=`voted_${currentDebateId}_${t}`;if(sessionStorage.getItem(a))return void alert("Ebben a körben már szavaztál!");db.ref(`debates/${currentDebateId}/rounds/${t}/votes${e}`).transaction(t=>(t||0)+1),sessionStorage.setItem(a,"true"),alert("Köszönjük a szavazatod!")}
         async function endRound(roundIndex) {
             const round = (await db.ref(`debates/${currentDebateId}/rounds/${roundIndex}`).once('value')).val();
-            const state = localState;
-            let winner = 'Döntetlen';
-            if ((round.votesA || 0) > (round.votesB || 0)) winner = 'A';
-            if ((round.votesB || 0) > (round.votesA || 0)) winner = 'B';
-            
-            const updates = {};
-            updates[`/rounds/${roundIndex}/winner`] = winner;
-            
-            let newMarkerPosition = state.markerPosition;
-            if (winner === 'A') {
-                newMarkerPosition -= 30;
-                updates['/scoreA'] = state.scoreA + 1;
-            } else if (winner === 'B') {
-                newMarkerPosition += 30;
-                updates['/scoreB'] = state.scoreB + 1;
-            }
-            updates['/markerPosition'] = newMarkerPosition;
-            
-            if (newMarkerPosition <= -60) {
-                updates['/gameState'] = 'FINISHED';
-                updates['/winner'] = 'A';
-            } else if (newMarkerPosition >= 60) {
-                updates['/gameState'] = 'FINISHED';
-                updates['/winner'] = 'B';
-            } else {
-                const nextTurn = state.nextStartingPlayer;
-                updates['/gameState'] = nextTurn + '_TURN';
-                updates['/turn'] = nextTurn;
-                updates['/nextStartingPlayer'] = (nextTurn === 'A' ? 'B' : 'A');
-            }
+            const state = localState; let winner = 'Döntetlen';
+            if ((round.votesA || 0) > (round.votesB || 0)) winner = 'A'; if ((round.votesB || 0) > (round.votesA || 0)) winner = 'B';
+            const updates = {}; updates[`/rounds/${roundIndex}/winner`] = winner;
+            let newPoints = state.points;
+            if (winner === 'A') { newPoints--; updates['/scoreA'] = state.scoreA + 1; } 
+            else if (winner === 'B') { newPoints++; updates['/scoreB'] = state.scoreB + 1; }
+            updates['/points'] = newPoints;
+            if (newPoints <= -2) { updates.gameState = 'FINISHED'; updates.winner = 'A'; } 
+            else if (newPoints >= 2) { updates.gameState = 'FINISHED'; updates.winner = 'B'; } 
+            else { const nextTurn = state.nextStartingPlayer; updates.gameState = nextTurn + '_TURN'; updates.turn = nextTurn; updates.nextStartingPlayer = (nextTurn === 'A' ? 'B' : 'A'); }
             dbRef.update(updates);
         }
     </script>
