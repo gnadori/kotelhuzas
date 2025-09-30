@@ -142,20 +142,19 @@
             updates[`/rounds/${roundIndex}/winner`] = winner;
             let newMarkerPosition = state.markerPosition;
             if (winner === 'A') {
-                newMarkerPosition -= 20;
+                newMarkerPosition -= 30; // JAVÍTVA 20-ról 30-ra
                 updates['/scoreA'] = state.scoreA + 1;
             } else if (winner === 'B') {
-                newMarkerPosition += 20;
+                newMarkerPosition += 30; // JAVÍTVA 20-ról 30-ra
                 updates['/scoreB'] = state.scoreB + 1;
             }
             updates['/markerPosition'] = newMarkerPosition;
-
             if (newMarkerPosition <= 0) {
                 updates['/gameState'] = 'FINISHED';
                 updates['/winner'] = 'A';
             } else if (newMarkerPosition >= 120) {
                 updates['/gameState'] = 'FINISHED';
-                updates['/winner'] = 'B'; // EZ VOLT A HIBA, KIJAVÍTVA
+                updates['/winner'] = 'B';
             } else {
                 const nextTurn = state.nextStartingPlayer;
                 updates['/gameState'] = nextTurn + '_TURN';
