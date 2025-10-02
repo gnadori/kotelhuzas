@@ -1,5 +1,6 @@
-1. Bevezető
-A "Vita Kötélhúzás" egy valós idejű, böngészőalapú webalkalmazás, amelynek célja, hogy interaktív és vizuális keretet biztosítson tanórai vagy baráti viták lebonyolításához. Az alkalmazás egy tanár/moderátor (Admin) által vezérelt vitát tesz lehetővé, ahol két fél ('A' és 'B') érvel, a közönség pedig szavaz.
+**Bevezető**
+
+A "Vita kötélhúzás" egy valós idejű, böngészőalapú webalkalmazás, amelynek célja, hogy interaktív és vizuális keretet biztosítson tanórai vagy baráti viták lebonyolításához. Az alkalmazás egy tanár/moderátor (Admin) által vezérelt vitát tesz lehetővé, ahol két fél ('A' és 'B') érvel, a közönség pedig szavaz.
 
 Az alkalmazás két külön oldalból áll:
 *admin.html*: A vita létrehozására és menedzselésére szolgáló felület.
@@ -7,8 +8,9 @@ Az alkalmazás két külön oldalból áll:
 
 A háttérben a Google Firebase Realtime Database biztosítja az adatok valós idejű szinkronizációját a résztvevők között.
 
-2. Használati Útmutató
-A. A tanár/admin teendői
+**Használati Útmutató**
+
+**A. A tanár/admin teendői**
 A vita elindítása és moderálása az admin feladata.
 Előkészületek: Nyisd meg a admin.html fájlt a böngésződben.
 Vita létrehozása:
@@ -34,7 +36,7 @@ A gomb megnyomása után a rendszer kiértékeli a győztest, frissíti az áll�
 
 Játék vége: A játék automatikusan véget ér, amikor az egyik fél 3-mal több kört nyer, mint a másik. A felületen megjelenik a győztes.
 
-B. A vitázók ('A' és 'B') teendői
+**B. A vitázók ('A' és 'B') teendői**
 Csatlakozás:
 Nyisd meg a tanártól kapott index.html linket.
 Írd be a neked szóló, egyedi kódot ('A' vagy 'B' vitázó kódja).
@@ -44,7 +46,7 @@ Amikor te következel, a képernyőn megjelenik egy nagy szövegdoboz.
 Írd be az érvedet vagy a válaszodat, majd kattints az "Elküldés" gombra.
 Várj, amíg a másik fél válaszol, majd a közönség szavaz, és az admin lezárja a kört.
 
-C. A nézők teendői
+**C. A nézők teendői**
 Csatlakozás:
 Nyisd meg a tanártól kapott index.html linket.
 Írd be a nézőknek szóló kódot.
